@@ -41,15 +41,16 @@ fn make_lines(tokens: Vec<&str>) -> Vec<String> {
             lbuffer.push(s);
             continue;
         }
-        if keywords.contains(s.to_lowercase().as_str()) {
+        let s_lowercase = s.to_lowercase();
+        if keywords.contains(s_lowercase.as_str()) {
             out.push(lbuffer.join(" "));
             out.push(rbuffer.join(" "));
-            lbuffer = match s {
-                &"inner" | &"outer" => {
+            lbuffer = match s_lowercase.as_str() {
+                "inner" | "outer" => {
                     let s2 = iter.next().unwrap();
                     vec![s, s2]
                 }
-                &"left" | &"right" => {
+                "left" | "right" => {
                     match iter.next() {
                         Some(s2 @ &"outer") => {
                             vec![s, s2, iter.next().unwrap()]
@@ -132,10 +133,10 @@ fn test_make_lines() {
     assert_eq!(vec!["select", "*", "FROM", "a"], result);
 
     let input2: Vec<&str> =
-        vec!["select", "a", ",", "b", "as", "bbb", "from", "t1", "inner",
-             "join", "t2", "on", "t1.id", "=", "t2.id", "where", "t1.id", "=", "1"];
+        vec!["select", "a", ",", "b", "as", "bbb", "from", "t1", "INNER",
+             "JOIN", "t2", "on", "t1.id", "=", "t2.id", "where", "t1.id", "=", "1"];
     let expected2: Vec<&str> =
-        vec!["select", "a", ",", "b as bbb", "from", "t1", "inner join",
+        vec!["select", "a", ",", "b as bbb", "from", "t1", "INNER JOIN",
              "t2 on t1.id = t2.id", "where", "t1.id = 1"];
     let result2 = make_lines(input2);
     assert_eq!(expected2, result2);
