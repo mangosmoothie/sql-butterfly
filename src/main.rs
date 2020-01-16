@@ -9,7 +9,7 @@ fn main() -> io::Result<()> {
     let tokens = split_query(&input);
     let out = make_lines(tokens);
     let mut longest = 0;
-    for i in (1..out.len()).step_by(2) {
+    for i in (0..out.len() - 1).step_by(2) {
         let l = match out.get(i) {
             Some(s) => s.len(),
             None => 0
@@ -22,7 +22,7 @@ fn main() -> io::Result<()> {
     while let Some(left) = iter2.next() {
         let right = iter2.next().unwrap();
         println!("{} {}",
-                 format!("{: >width$}", left, width=longest + 1),
+                 format!("{: >width$}", left, width=longest),
                  right);
     }
 
@@ -94,8 +94,8 @@ fn split_commas(s: &str) -> Vec<&str> {
     for (index, matched) in s.match_indices(",") {
         if last != index {
             result.push(&s[last..index]);
-            last = index + 1;
         }
+        last = index + 1;
         result.push(matched);
     }
     if last < s.len() {
@@ -113,6 +113,10 @@ fn test_split_query() {
     let query2 = "SELECT a, b, c FROM table";
     let result2 = split_query(query2);
     assert_eq!(vec!["SELECT", "a", ",", "b", ",", "c", "FROM", "table"], result2);
+
+    let query3 = "SELECT a ,b ,c FROM table";
+    let result3 = split_query(query3);
+    assert_eq!(vec!["SELECT", "a", ",", "b", ",", "c", "FROM", "table"], result3);
 }
 
 #[test]
@@ -124,6 +128,9 @@ fn test_split_commas() {
     let query2 = "a,b,c";
     let result2 = split_commas(query2);
     assert_eq!(vec!["a", ",", "b", ",", "c"], result2);
+
+    assert_eq!(vec!["a", ","], split_commas("a,"));
+    assert_eq!(vec![",", "a"], split_commas(",a"));
 }
 
 #[test]
