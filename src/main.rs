@@ -46,7 +46,7 @@ fn make_lines(tokens: Vec<&str>) -> Vec<String> {
             out.push(lbuffer.join(" "));
             out.push(rbuffer.join(" "));
             lbuffer = match s_lowercase.as_str() {
-                "inner" | "outer" => {
+                "inner" | "outer" | "group" | "cluster" => {
                     let s2 = iter.next().unwrap();
                     vec![s, s2]
                 }
@@ -81,6 +81,11 @@ fn make_keyword_set() -> HashSet<&'static str> {
      "outer",
      "join",
      "on",
+     "group",
+     "cluster",
+     "having",
+     "top",
+     "limit",
      ",",
     ].iter().cloned().collect()
 }
