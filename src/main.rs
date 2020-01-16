@@ -80,6 +80,7 @@ fn make_keyword_set() -> HashSet<&'static str> {
      "inner",
      "outer",
      "join",
+     "on",
      ",",
     ].iter().cloned().collect()
 }
