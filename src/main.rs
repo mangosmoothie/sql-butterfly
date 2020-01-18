@@ -29,6 +29,11 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
+fn is_group_symbol(c: &char) -> bool {
+    let syms = ['(', ')', '\''];
+    syms.contains(c)
+}
+
 fn make_lines(tokens: Vec<&str>) -> Vec<String> {
     let keywords = make_keyword_set();
     let mut iter = tokens.iter();
@@ -63,12 +68,48 @@ fn make_lines(tokens: Vec<&str>) -> Vec<String> {
             };
             rbuffer = Vec::new();
         } else {
+            let mut group_stack: Vec<char> = Vec::new();
             rbuffer.push(s);
+            detect_groups(&mut group_stack, s);
+            if !group_stack.is_empty() {
+                while let Some(s2) = iter.next() {
+                    rbuffer.push(s2);
+                    if !group_stack.is_empty() {
+                        detect_groups(&mut group_stack, s2);
+                    } else {
+                        break;
+                    }
+                }
+            }
         }
     };
     out.push(lbuffer.join(" "));
     out.push(rbuffer.join(" "));
     out
+}
+
+fn detect_groups(group_chars: &mut Vec<char>, s: &str) {
+    for c in s.chars() {
+        if is_group_symbol(&c) {
+            if group_chars.is_empty() {
+                group_chars.push(c);
+            } else if *group_chars.last().unwrap() == '\'' {
+                if '\'' == c {
+                    group_chars.pop();
+                }
+            } else {
+                if c == '(' {
+                    group_chars.push(c);
+                } else if c == ')' {
+                    if *group_chars.last().unwrap() == '(' {
+                        group_chars.pop();
+                    } else {
+                        group_chars.push(c);
+                    }
+                }
+            }
+        }
+    }
 }
 
 fn make_keyword_set() -> HashSet<&'static str> {
@@ -150,7 +191,22 @@ fn test_make_lines() {
              "JOIN", "t2", "on", "t1.id", "=", "t2.id", "where", "t1.id", "=", "1"];
     let expected2: Vec<&str> =
         vec!["select", "a", ",", "b as bbb", "from", "t1", "INNER JOIN",
-             "t2 on t1.id = t2.id", "where", "t1.id = 1"];
+             "t2", "on", "t1.id = t2.id", "where", "t1.id = 1"];
     let result2 = make_lines(input2);
     assert_eq!(expected2, result2);
+}
+
+#[test]
+fn test_make_lines_groupings() {
+    let input: Vec<&str> = vec!["select", "concat(a", ",", "b)"];
+    let expected: Vec<&str> = vec!["select", "concat(a , b)"];
+    assert_eq!(expected, make_lines(input));
+
+    let input2 = vec!["select", "con('f)()'", ",", "'()'"];
+    let expected2 = vec!["select", "con('f)()' , '()'"];
+    assert_eq!(expected2, make_lines(input2));
+
+    let input3 = vec!["select", "con())", "from", "b"];
+    let expected3 = vec!["select", "con()) from b"];
+    assert_eq!(expected3, make_lines(input3))
 }
